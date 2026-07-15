@@ -47,7 +47,7 @@ No requiere internet, instalacion adicional ni servidor externo.
 - Registro de clave o PIN del equipo, si corresponde.
 - Registro de tecnico responsable.
 - Registro de tipo de pago.
-- Calculo de subtotal, IVA 19%, total, abono y saldo pendiente.
+- Calculo de neto, IVA incluido 19%, total, abono y saldo pendiente.
 - Vista previa profesional de la boleta.
 - Impresion de boleta.
 - Guardado como PDF desde la ventana de impresion.
@@ -83,7 +83,7 @@ La boleta incluye:
 - Repuestos usados, si aplica.
 - Condiciones de garantia.
 - Total, abono y saldo pendiente.
-- Subtotal e IVA 19%.
+- Neto e IVA incluido 19%.
 - Firma del cliente.
 - Firma del tecnico.
 

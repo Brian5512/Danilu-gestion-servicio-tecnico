@@ -185,14 +185,14 @@ function cleanPayload(raw) {
 }
 
 function calculateAmounts(receipt) {
-  const subtotal = Math.max(
+  const total = Math.max(
     Number(receipt.labor_cost || 0) +
       Number(receipt.other_cost || 0) -
       Number(receipt.discount || 0),
     0
   );
-  const taxAmount = Math.round(subtotal * IVA_RATE);
-  const total = subtotal + taxAmount;
+  const subtotal = Math.round(total / (1 + IVA_RATE));
+  const taxAmount = total - subtotal;
   const balance = Math.max(total - Number(receipt.paid_amount || 0), 0);
   return {
     subtotal,
@@ -203,17 +203,7 @@ function calculateAmounts(receipt) {
 }
 
 function receiptAmounts(receipt) {
-  if (
-    Number.isFinite(Number(receipt.subtotal)) &&
-    Number.isFinite(Number(receipt.tax_amount))
-  ) {
-    return {
-      subtotal: Number(receipt.subtotal || 0),
-      tax_amount: Number(receipt.tax_amount || 0),
-      total: Number(receipt.total || 0),
-      balance: Number(receipt.balance || 0),
-    };
-  }
+  // Recalculate from entered values so the app consistently treats prices as IVA-included.
   return calculateAmounts(receipt);
 }
 
@@ -529,8 +519,8 @@ function renderMonthlySummary() {
   monthlySummaryContent.innerHTML = `
     <div class="monthly-grid">
       ${summaryCard("Boletas", monthReceipts.length)}
-      ${summaryCard("Subtotal", money.format(subtotalSold))}
-      ${summaryCard("IVA", money.format(taxSold))}
+      ${summaryCard("Neto", money.format(subtotalSold))}
+      ${summaryCard("IVA incluido", money.format(taxSold))}
       ${summaryCard("Vendido", money.format(totalSold))}
       ${summaryCard("Pagado", money.format(totalPaid))}
       ${summaryCard("Saldo pendiente", money.format(totalBalance))}
@@ -596,8 +586,8 @@ function buildReceiptDocument(receipt) {
     ["Mano de obra", receipt.labor_cost],
     ["Otros", receipt.other_cost],
     ["Descuento", -Math.abs(receipt.discount || 0)],
-    ["Subtotal", amounts.subtotal],
-    ["IVA 19%", amounts.tax_amount],
+    ["Neto", amounts.subtotal],
+    ["IVA incluido 19%", amounts.tax_amount],
     ["Total", amounts.total],
     ["Pagado", receipt.paid_amount],
     ["Saldo", amounts.balance],
