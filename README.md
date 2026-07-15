@@ -1,6 +1,6 @@
 # Danilu - Sistema Local de Gestion de Boletas
 
-Aplicacion local para administrar boletas de servicio tecnico, registrar reparaciones, controlar pendientes e imprimir comprobantes profesionales para clientes.
+Aplicacion local para administrar boletas de servicio tecnico, registrar reparaciones, controlar pendientes e imprimir comprobantes para clientes.
 
 ---
 
