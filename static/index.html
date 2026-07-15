@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Danilu | Boletas de servicio técnico</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-mark">
+        <img src="assets/danilu-logo.png" alt="Logo Danilu" />
+        <div>
+          <p class="eyebrow">Servicio técnico</p>
+          <h1>Danilu</h1>
+          <p class="brand-contact">Mario Gongora 102 · LYMSERVICIO@GMAIL.COM · WhatsApp +56 9 9659 6155</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="newReceiptButton" class="primary" type="button">Nueva boleta</button>
+        <button id="exportCsvButton" class="ghost" type="button">Exportar CSV</button>
+        <button id="exportJsonButton" class="ghost" type="button">Respaldo JSON</button>
+        <button id="importButton" class="ghost" type="button">Importar</button>
+        <input id="importFile" type="file" accept="application/json,.json" hidden />
+      </div>
+    </header>
+
+    <main class="app-shell">
+      <section id="backupReminder" class="backup-reminder" hidden>
+        <div>
+          <strong>Respaldo recomendado</strong>
+          <span>Exporta un respaldo JSON para guardar una copia de tus boletas fuera del navegador.</span>
+        </div>
+        <button id="dismissBackupReminder" class="ghost" type="button">Recordar luego</button>
+      </section>
+
+      <section class="summary-strip" aria-label="Resumen">
+        <article>
+          <span>Boletas</span>
+          <strong id="statAll">0</strong>
+        </article>
+        <article>
+          <span>En proceso</span>
+          <strong id="statActive">0</strong>
+        </article>
+        <article>
+          <span>Entregadas</span>
+          <strong id="statDone">0</strong>
+        </article>
+        <article>
+          <span>Saldo pendiente</span>
+          <strong id="statPending">$0</strong>
+        </article>
+      </section>
+
+      <section id="pendingPanel" class="pending-panel" aria-label="Pendientes y atrasos">
+        <div class="panel-header compact">
+          <div>
+            <p class="eyebrow">Pendientes</p>
+            <h2>Equipos por revisar</h2>
+          </div>
+          <strong id="statOverdue">0 atrasados</strong>
+        </div>
+        <div id="pendingList" class="pending-list"></div>
+      </section>
+
+      <section class="workspace">
+        <aside class="list-panel" aria-label="Historial de boletas">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Historial</p>
+              <h2>Arreglos registrados</h2>
+            </div>
+          </div>
+
+          <div class="filters">
+            <button id="monthlySummaryButton" class="summary-button" type="button">Resumen mensual</button>
+            <input id="searchInput" type="search" placeholder="Buscar cliente, equipo, folio..." />
+            <select id="statusFilter" aria-label="Filtrar por estado">
+              <option value="">Todos los estados</option>
+              <option>Recibido</option>
+              <option>Diagnosticando</option>
+              <option>Esperando repuesto</option>
+              <option>Listo para retiro</option>
+              <option>Entregado</option>
+              <option>Anulado</option>
+            </select>
+          </div>
+
+          <div id="receiptList" class="receipt-list"></div>
+        </aside>
+
+        <section class="form-panel" aria-label="Formulario de boleta">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow" id="formMode">Nueva boleta</p>
+              <h2 id="formTitle">Registrar servicio</h2>
+              <strong id="formFolioBadge" class="folio-badge">Sin folio</strong>
+            </div>
+          </div>
+
+          <form id="receiptForm">
+            <input type="hidden" name="id" id="receiptId" />
+
+            <div class="form-grid">
+              <label>
+                Cliente
+                <input name="client_name" required autocomplete="name" />
+              </label>
+              <label>
+                RUT
+                <input name="client_rut" />
+              </label>
+              <label>
+                Teléfono
+                <input name="phone" autocomplete="tel" />
+              </label>
+              <label>
+                Correo
+                <input name="email" type="email" autocomplete="email" />
+              </label>
+              <label class="wide">
+                Dirección
+                <input name="address" autocomplete="street-address" />
+              </label>
+            </div>
+
+            <hr />
+
+            <div class="form-grid">
+              <label>
+                Equipo
+                <input name="device_type" placeholder="Notebook, celular, impresora..." />
+              </label>
+              <label>
+                Marca
+                <input name="brand" />
+              </label>
+              <label>
+                Modelo
+                <input name="model" />
+              </label>
+              <label>
+                Serie / IMEI
+                <input name="serial_number" />
+              </label>
+              <label class="wide">
+                Accesorios recibidos
+                <input name="accessories" placeholder="Cargador, bolso, cable, batería..." />
+              </label>
+              <label>
+                Clave / PIN equipo
+                <input name="device_password" placeholder="Opcional" />
+              </label>
+              <label>
+                Garantía en días
+                <input name="warranty" type="number" min="0" step="1" placeholder="30" />
+              </label>
+            </div>
+
+            <div class="form-grid">
+              <label>
+                Fecha de ingreso
+                <input name="received_date" type="date" />
+              </label>
+              <label>
+                Fecha prometida
+                <input name="promised_date" type="date" />
+              </label>
+              <label>
+                Fecha de entrega
+                <input name="delivered_date" type="date" />
+              </label>
+              <label>
+                Estado
+                <select name="status">
+                  <option>Recibido</option>
+                  <option>Diagnosticando</option>
+                  <option>Esperando repuesto</option>
+                  <option>Listo para retiro</option>
+                  <option>Entregado</option>
+                  <option>Anulado</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="form-grid">
+              <label class="wide">
+                Falla reportada por el cliente
+                <textarea name="reported_issue" rows="3"></textarea>
+              </label>
+              <label class="wide">
+                Diagnóstico
+                <textarea name="diagnosis" rows="3"></textarea>
+              </label>
+              <label class="wide">
+                Trabajo realizado
+                <textarea name="work_done" rows="3"></textarea>
+              </label>
+              <label class="wide">
+                Repuestos usados
+                <textarea name="parts_used" rows="2"></textarea>
+              </label>
+              <label>
+                Técnico
+                <input name="technician" />
+              </label>
+            </div>
+
+            <hr />
+
+            <div class="money-grid">
+              <label>
+                Mano de obra
+                <input name="labor_cost" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                Otros
+                <input name="other_cost" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                Descuento
+                <input name="discount" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                Abono / pagado
+                <input name="paid_amount" type="number" min="0" step="1" value="0" />
+              </label>
+              <label>
+                Tipo de pago
+                <select name="payment_method">
+                  <option value="">Pendiente</option>
+                  <option>Efectivo</option>
+                  <option>Transferencia</option>
+                  <option>Débito</option>
+                  <option>Crédito</option>
+                  <option>Otro</option>
+                </select>
+              </label>
+              <div class="total-box">
+                <span>Total</span>
+                <strong id="totalPreview">$0</strong>
+                <small>Saldo: <b id="balancePreview">$0</b></small>
+              </div>
+            </div>
+
+            <label class="full-label">
+              Observaciones internas
+              <textarea name="notes" rows="2"></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button class="primary" type="submit">Guardar boleta</button>
+              <button id="previewButton" class="ghost" type="button">Vista previa</button>
+              <button class="print-button ghost" type="button" disabled>Imprimir boleta</button>
+              <button id="clearButton" class="ghost" type="button">Limpiar</button>
+              <button id="deleteButton" class="danger" type="button" disabled>Eliminar</button>
+            </div>
+          </form>
+        </section>
+      </section>
+    </main>
+
+    <section id="printArea" class="print-area" aria-hidden="true"></section>
+    <dialog id="previewModal" class="preview-modal">
+      <div class="preview-shell">
+        <div class="preview-head">
+          <div>
+            <p class="eyebrow">Vista previa</p>
+            <h2>Boleta de servicio</h2>
+          </div>
+          <button id="closePreviewButton" class="ghost" type="button">Cerrar</button>
+        </div>
+        <div id="previewContent" class="preview-content"></div>
+        <div class="preview-actions">
+          <button id="printNowButton" class="primary" type="button">Imprimir ahora</button>
+          <button id="savePdfButton" class="ghost" type="button">Guardar como PDF</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="monthlyModal" class="preview-modal">
+      <div class="preview-shell">
+        <div class="preview-head">
+          <div>
+            <p class="eyebrow">Resumen mensual</p>
+            <h2>Movimiento del mes</h2>
+          </div>
+          <button id="closeMonthlyButton" class="ghost" type="button">Cerrar</button>
+        </div>
+        <div class="month-picker">
+          <label>
+            Mes a revisar
+            <input id="summaryMonthInput" type="month" />
+          </label>
+        </div>
+        <div id="monthlySummaryContent" class="monthly-summary"></div>
+      </div>
+    </dialog>
+    <div id="toast" class="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
