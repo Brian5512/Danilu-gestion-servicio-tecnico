@@ -16,7 +16,7 @@ Aplicacion local para administrar boletas de servicio tecnico, registrar reparac
 ## Como Abrir la Aplicacion
 
 1. Abre la carpeta del proyecto.
-2. Ejecuta el archivo `abrir-danilu.bat`.
+2. Ejecuta el acceso directo `Danilu - Sistema de Boletas`.
 3. La aplicacion se abrira en el navegador.
 
 No requiere internet, instalacion adicional ni servidor externo.
@@ -104,7 +104,8 @@ Importante: si se borran los datos del navegador, se pueden perder las boletas g
 
 ## Archivos del Proyecto
 
-- `abrir-danilu.bat`: acceso directo para abrir la aplicacion.
+- `Danilu - Sistema de Boletas.lnk`: acceso directo con icono para abrir la aplicacion.
+- `Abrir Danilu.bat`: archivo de apertura usado por el acceso directo.
 - `static/index.html`: estructura principal de la aplicacion.
 - `static/styles.css`: diseno visual.
 - `static/app.js`: funcionamiento y base de datos local.
