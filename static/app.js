@@ -36,6 +36,7 @@ const STORE_NAME = "receipts";
 const DB_VERSION = 1;
 const BACKUP_KEY = "danilu_last_backup_at";
 const BACKUP_DISMISS_KEY = "danilu_backup_dismissed_at";
+const IVA_RATE = 0.19;
 
 let db = null;
 let receipts = [];
@@ -179,12 +180,41 @@ function cleanPayload(raw) {
   if (!payload.status) payload.status = "Recibido";
   if (!payload.received_date) payload.received_date = today();
 
-  payload.total = Math.max(
-    payload.labor_cost + payload.other_cost - payload.discount,
+  Object.assign(payload, calculateAmounts(payload));
+  return payload;
+}
+
+function calculateAmounts(receipt) {
+  const subtotal = Math.max(
+    Number(receipt.labor_cost || 0) +
+      Number(receipt.other_cost || 0) -
+      Number(receipt.discount || 0),
     0
   );
-  payload.balance = Math.max(payload.total - payload.paid_amount, 0);
-  return payload;
+  const taxAmount = Math.round(subtotal * IVA_RATE);
+  const total = subtotal + taxAmount;
+  const balance = Math.max(total - Number(receipt.paid_amount || 0), 0);
+  return {
+    subtotal,
+    tax_amount: taxAmount,
+    total,
+    balance,
+  };
+}
+
+function receiptAmounts(receipt) {
+  if (
+    Number.isFinite(Number(receipt.subtotal)) &&
+    Number.isFinite(Number(receipt.tax_amount))
+  ) {
+    return {
+      subtotal: Number(receipt.subtotal || 0),
+      tax_amount: Number(receipt.tax_amount || 0),
+      total: Number(receipt.total || 0),
+      balance: Number(receipt.balance || 0),
+    };
+  }
+  return calculateAmounts(receipt);
 }
 
 function formData() {
@@ -229,15 +259,16 @@ function getNumber(name) {
 }
 
 function updateTotals() {
-  const total = Math.max(
-    getNumber("labor_cost") +
-      getNumber("other_cost") -
-      getNumber("discount"),
-    0
-  );
-  const balance = Math.max(total - getNumber("paid_amount"), 0);
-  document.querySelector("#totalPreview").textContent = money.format(total);
-  document.querySelector("#balancePreview").textContent = money.format(balance);
+  const amounts = calculateAmounts({
+    labor_cost: getNumber("labor_cost"),
+    other_cost: getNumber("other_cost"),
+    discount: getNumber("discount"),
+    paid_amount: getNumber("paid_amount"),
+  });
+  document.querySelector("#subtotalPreview").textContent = money.format(amounts.subtotal);
+  document.querySelector("#taxPreview").textContent = money.format(amounts.tax_amount);
+  document.querySelector("#totalPreview").textContent = money.format(amounts.total);
+  document.querySelector("#balancePreview").textContent = money.format(amounts.balance);
 }
 
 function statusClass(status) {
@@ -310,7 +341,9 @@ function renderList() {
 
   receiptList.innerHTML = visible
     .map(
-      (receipt) => `
+      (receipt) => {
+        const amounts = receiptAmounts(receipt);
+        return `
         <button class="receipt-card ${currentReceipt?.id === receipt.id ? "active" : ""} ${isOverdue(receipt) ? "overdue" : ""}" data-id="${receipt.id}" type="button">
           <header>
             <div>
@@ -322,10 +355,11 @@ function renderList() {
           <div class="receipt-meta">
             <small>${escapeHtml([receipt.device_type, receipt.brand, receipt.model].filter(Boolean).join(" · ") || "Equipo sin detalle")}</small>
             <small>${escapeHtml(dueLabel(receipt))}</small>
-            <small>Total ${money.format(receipt.total || 0)} · Saldo ${money.format(receipt.balance || 0)}</small>
+            <small>Total ${money.format(amounts.total)} · Saldo ${money.format(amounts.balance)}</small>
           </div>
         </button>
-      `
+      `;
+      }
     )
     .join("");
 }
@@ -347,7 +381,7 @@ async function loadReceipts() {
 function loadStats() {
   const active = receipts.filter((receipt) => !isClosed(receipt)).length;
   const done = receipts.filter((receipt) => receipt.status === "Entregado").length;
-  const pending = receipts.reduce((sum, receipt) => sum + Number(receipt.balance || 0), 0);
+  const pending = receipts.reduce((sum, receipt) => sum + receiptAmounts(receipt).balance, 0);
   const overdue = receipts.filter(isOverdue).length;
   document.querySelector("#statAll").textContent = receipts.length;
   document.querySelector("#statActive").textContent = active;
@@ -477,9 +511,11 @@ function closeMonthlySummary() {
 function renderMonthlySummary() {
   const selectedMonth = summaryMonthInput.value || currentMonthKey();
   const monthReceipts = receipts.filter((receipt) => receiptMonth(receipt) === selectedMonth);
-  const totalSold = monthReceipts.reduce((sum, receipt) => sum + Number(receipt.total || 0), 0);
+  const subtotalSold = monthReceipts.reduce((sum, receipt) => sum + receiptAmounts(receipt).subtotal, 0);
+  const taxSold = monthReceipts.reduce((sum, receipt) => sum + receiptAmounts(receipt).tax_amount, 0);
+  const totalSold = monthReceipts.reduce((sum, receipt) => sum + receiptAmounts(receipt).total, 0);
   const totalPaid = monthReceipts.reduce((sum, receipt) => sum + Number(receipt.paid_amount || 0), 0);
-  const totalBalance = monthReceipts.reduce((sum, receipt) => sum + Number(receipt.balance || 0), 0);
+  const totalBalance = monthReceipts.reduce((sum, receipt) => sum + receiptAmounts(receipt).balance, 0);
   const delivered = monthReceipts.filter((receipt) => receipt.status === "Entregado").length;
   const active = monthReceipts.filter((receipt) => !isClosed(receipt)).length;
   const overdue = monthReceipts.filter(isOverdue).length;
@@ -493,6 +529,8 @@ function renderMonthlySummary() {
   monthlySummaryContent.innerHTML = `
     <div class="monthly-grid">
       ${summaryCard("Boletas", monthReceipts.length)}
+      ${summaryCard("Subtotal", money.format(subtotalSold))}
+      ${summaryCard("IVA", money.format(taxSold))}
       ${summaryCard("Vendido", money.format(totalSold))}
       ${summaryCard("Pagado", money.format(totalPaid))}
       ${summaryCard("Saldo pendiente", money.format(totalBalance))}
@@ -523,7 +561,7 @@ function renderMonthlySummary() {
                       <strong>${escapeHtml(receipt.folio || "")}</strong>
                       ${escapeHtml(receipt.client_name || "Sin cliente")}
                     </span>
-                    <small>${escapeHtml(receipt.status || "")} · ${money.format(receipt.total || 0)}</small>
+                    <small>${escapeHtml(receipt.status || "")} · ${money.format(receiptAmounts(receipt).total)}</small>
                   </button>
                 `
               )
@@ -553,13 +591,16 @@ function receiptForPreview() {
 }
 
 function buildReceiptDocument(receipt) {
+  const amounts = receiptAmounts(receipt);
   const totalRows = [
     ["Mano de obra", receipt.labor_cost],
     ["Otros", receipt.other_cost],
     ["Descuento", -Math.abs(receipt.discount || 0)],
-    ["Total", receipt.total],
+    ["Subtotal", amounts.subtotal],
+    ["IVA 19%", amounts.tax_amount],
+    ["Total", amounts.total],
     ["Pagado", receipt.paid_amount],
-    ["Saldo", receipt.balance],
+    ["Saldo", amounts.balance],
   ];
 
   return `
@@ -948,6 +989,8 @@ function exportCsv() {
     "labor_cost",
     "other_cost",
     "discount",
+    "subtotal",
+    "tax_amount",
     "paid_amount",
     "total",
     "balance",
@@ -955,7 +998,15 @@ function exportCsv() {
   ];
   const lines = [headers.join(",")];
   for (const receipt of receipts) {
-    lines.push(headers.map((header) => csvValue(receipt[header])).join(","));
+    const amounts = receiptAmounts(receipt);
+    const exportRow = {
+      ...receipt,
+      subtotal: amounts.subtotal,
+      tax_amount: amounts.tax_amount,
+      total: amounts.total,
+      balance: amounts.balance,
+    };
+    lines.push(headers.map((header) => csvValue(exportRow[header])).join(","));
   }
   downloadFile(`boletas-danilu-${today()}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
   showToast("CSV exportado");
