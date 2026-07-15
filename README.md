@@ -106,7 +106,7 @@ Importante: si se borran los datos del navegador, se pueden perder las boletas g
 ## Archivos del Proyecto
 
 - `Danilu - Sistema de Boletas.bat`: archivo portable para abrir la aplicacion.
-- `Crear acceso directo con logo.bat`: crea en el Escritorio un acceso directo con el logo de Danilu.
+- `Crear acceso directo con logo.bat`: crea un acceso directo con logo en esta carpeta y en el Escritorio.
 - `Abrir Danilu.bat`: archivo de apertura alternativo.
 - `static/index.html`: estructura principal de la aplicacion.
 - `static/styles.css`: diseno visual.
