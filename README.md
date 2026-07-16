@@ -7,10 +7,6 @@ Aplicacion local para administrar boletas de servicio tecnico, registrar reparac
 ## Informacion del Servicio
 
 **Nombre:** Danilu  
-**Direccion:** Mario Gongora 102  
-**Correo:** LYMSERVICIO@GMAIL.COM  
-**WhatsApp:** +56 9 9659 6155
-
 ---
 
 ## Como Abrir la Aplicacion
