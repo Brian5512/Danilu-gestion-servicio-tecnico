@@ -18,10 +18,10 @@
         </div>
 
         <nav class="sidebar-nav">
-          <a class="active" href="#dashboard"><span aria-hidden="true">01</span>Panel</a>
-          <a href="#ordersPanel"><span aria-hidden="true">02</span>Historial</a>
-          <a href="#receiptForm"><span aria-hidden="true">03</span>Registrar servicio</a>
-          <a href="#pendingPanel"><span aria-hidden="true">04</span>Pendientes</a>
+          <a class="active" href="#dashboard" data-view="dashboard"><span aria-hidden="true">01</span>Panel</a>
+          <a href="#ordersPanel" data-view="dashboard"><span aria-hidden="true">02</span>Órdenes</a>
+          <a href="#receiptForm" data-view="form"><span aria-hidden="true">03</span>Registrar servicio</a>
+          <a href="#pendingPanel" data-view="dashboard"><span aria-hidden="true">04</span>Pendientes</a>
         </nav>
 
         <div class="sidebar-contact">
@@ -110,16 +110,24 @@
                 </select>
               </div>
 
+              <div class="receipt-table-head" aria-hidden="true">
+                <span>Orden / cliente</span>
+                <span>Equipo</span>
+                <span>Entrega</span>
+                <span>Estado</span>
+                <span>Valores</span>
+              </div>
               <div id="receiptList" class="receipt-list"></div>
             </aside>
 
             <section class="form-panel" aria-label="Formulario de boleta">
-              <div class="panel-header">
+              <div class="panel-header form-panel-header">
                 <div>
                   <p class="eyebrow" id="formMode">Nueva boleta</p>
                   <h2 id="formTitle">Registrar servicio</h2>
                   <strong id="formFolioBadge" class="folio-badge">Sin folio</strong>
                 </div>
+                <button id="backToDashboardButton" class="ghost" type="button">Volver al panel</button>
               </div>
 
               <form id="receiptForm">
@@ -326,6 +334,6 @@
       </div>
     </dialog>
     <div id="toast" class="toast" role="status"></div>
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
   </body>
 </html>

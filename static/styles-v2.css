@@ -186,7 +186,22 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 .print-button { border-color: rgba(211,162,76,.48); color: #e3bd75; }
 .icon-button { min-width: 88px; }
 
-.app-shell { width: min(1540px, calc(100% - 40px)); margin: 20px auto 42px; }
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 2.35fr) minmax(300px, 0.85fr);
+  grid-template-areas:
+    "summary summary"
+    "list pending"
+    "backup backup";
+  gap: 14px;
+  width: min(1540px, calc(100% - 40px));
+  margin: 20px auto 42px;
+}
+
+.app-shell.form-view {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "form";
+}
 .backup-reminder, .pending-panel, .list-panel, .form-panel, .summary-strip article {
   border: 1px solid var(--line);
   border-radius: 5px;
@@ -194,12 +209,13 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 }
 
 .backup-reminder {
+  grid-area: backup;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
-  padding: 13px 15px;
+  margin-bottom: 0;
+  padding: 10px 13px;
   border-left: 3px solid var(--accent);
 }
 
@@ -207,10 +223,11 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 .backup-reminder span { margin-top: 2px; color: var(--muted); }
 
 .summary-strip {
+  grid-area: summary;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .summary-strip article { position: relative; min-height: 102px; padding: 18px 19px 16px; overflow: hidden; }
@@ -242,7 +259,7 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 .summary-strip article:nth-child(2) strong { color: var(--green); }
 .summary-strip article:nth-child(4) strong { color: #d28a5b; }
 
-.pending-panel { margin-bottom: 14px; overflow: hidden; }
+.pending-panel { grid-area: pending; margin-bottom: 0; overflow: hidden; }
 .panel-header {
   display: flex;
   align-items: center;
@@ -266,7 +283,7 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 
 .pending-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 1px;
   padding: 1px 0 0;
   background: var(--line-soft);
@@ -296,16 +313,19 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
 .empty-inline { margin: 0; padding: 16px 18px; background: var(--panel); color: var(--muted); }
 
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
+  display: contents;
 }
 
 .list-panel, .form-panel { box-shadow: var(--shadow); }
-.list-panel { position: sticky; top: 110px; min-height: 660px; overflow: hidden; }
-.form-panel { min-width: 0; overflow: hidden; }
+.list-panel { grid-area: list; min-width: 0; min-height: 640px; overflow: hidden; }
+.form-panel { display: none; grid-area: form; min-width: 0; overflow: hidden; }
+.app-shell.form-view .backup-reminder,
+.app-shell.form-view .summary-strip,
+.app-shell.form-view .pending-panel,
+.app-shell.form-view .list-panel { display: none !important; }
+.app-shell.form-view .form-panel { display: block; }
 .form-panel > .panel-header { background: #1d2429; }
+.form-panel-header { min-height: 78px; }
 .folio-badge {
   display: inline-flex;
   width: fit-content;
@@ -318,9 +338,15 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   font-size: 12px;
 }
 
-.filters { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 13px 14px 14px; }
-.filters #searchInput { grid-column: 1 / -1; grid-row: 1; }
-.summary-button { justify-content: flex-start; color: #dfb46b; }
+.filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 170px 150px;
+  gap: 8px;
+  padding: 13px 14px 14px;
+}
+.filters #searchInput { grid-column: 1; grid-row: 1; }
+.filters #statusFilter { grid-column: 2; grid-row: 1; }
+.summary-button { grid-column: 3; grid-row: 1; justify-content: flex-start; color: #dfb46b; }
 
 input, select, textarea {
   width: 100%;
@@ -340,31 +366,54 @@ input:hover, select:hover, textarea:hover { border-color: #4b575f; }
 input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(189,120,75,.12); }
 
 .receipt-list {
-  max-height: calc(100vh - 276px);
-  min-height: 420px;
+  max-height: 560px;
+  min-height: 460px;
   overflow: auto;
   border-top: 1px solid var(--line-soft);
   scrollbar-color: #444f56 var(--panel);
 }
 
 .receipt-card {
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(145px, 1.35fr) minmax(135px, 1.25fr) minmax(115px, 0.9fr) minmax(105px, 0.9fr) minmax(120px, 1fr);
+  align-items: center;
+  gap: 12px;
   width: 100%;
   min-height: 0;
-  padding: 13px 15px;
+  padding: 12px 15px;
   border: 0;
   border-left: 2px solid transparent;
   border-bottom: 1px solid var(--line-soft);
   border-radius: 0;
   background: var(--panel);
   text-align: left;
+  white-space: normal;
 }
 
 .receipt-card:hover { background: var(--panel-raised); }
 .receipt-card.active { border-left-color: var(--brand); background: #242b30; }
-.receipt-card header { display: flex; justify-content: space-between; gap: 12px; }
+.receipt-card header, .receipt-meta { display: contents; }
+.receipt-card header > div { grid-column: 1; grid-row: 1; min-width: 0; }
 .receipt-card strong { display: block; color: #f4f6f7; overflow-wrap: anywhere; }
 .receipt-card header small { display: block; margin-top: 2px; color: var(--blue); }
+.receipt-card .receipt-meta small:nth-child(1) { grid-column: 2; grid-row: 1; }
+.receipt-card .receipt-meta small:nth-child(2) { grid-column: 3; grid-row: 1; }
+.receipt-card .status { grid-column: 4; grid-row: 1; justify-self: start; }
+.receipt-card .receipt-meta small:nth-child(3) { grid-column: 5; grid-row: 1; color: var(--muted-strong); }
+
+.receipt-table-head {
+  display: grid;
+  grid-template-columns: minmax(145px, 1.35fr) minmax(135px, 1.25fr) minmax(115px, 0.9fr) minmax(105px, 0.9fr) minmax(120px, 1fr);
+  gap: 12px;
+  padding: 10px 15px;
+  border-top: 1px solid var(--line-soft);
+  background: #181e22;
+  color: #78838a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 
 .status {
   align-self: flex-start;
@@ -382,7 +431,7 @@ input:focus, select:focus, textarea:focus { border-color: var(--brand); box-shad
 .status.esperando-repuesto { border-color: rgba(211,162,76,.28); background: rgba(211,162,76,.12); color: #e0b76e; }
 .status.listo-para-retiro, .status.entregado { border-color: rgba(134,200,111,.25); background: rgba(88,153,66,.13); color: #96d77e; }
 .status.anulado { border-color: rgba(239,112,104,.26); background: rgba(239,112,104,.11); color: #ef837c; }
-.receipt-meta { display: grid; gap: 3px; margin-top: 8px; }
+.receipt-meta { gap: 3px; margin-top: 0; }
 .empty-state { padding: 28px 18px; color: var(--muted); line-height: 1.55; }
 
 form { display: grid; gap: 18px; padding: 18px; }
@@ -517,6 +566,19 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   .receipt-list { max-height: 430px; }
 }
 
+@media (max-width: 840px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "summary"
+      "list"
+      "pending"
+      "backup";
+  }
+
+  .app-shell.form-view { grid-template-areas: "form"; }
+}
+
 @media (max-width: 720px) {
   .sidebar { display: block; }
   .sidebar-nav { justify-content: flex-start; margin-top: 10px; }
@@ -525,6 +587,17 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   .app-shell { width: min(100% - 20px, 1540px); margin-top: 10px; }
   .summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pending-list, .monthly-grid { grid-template-columns: 1fr; }
+  .filters { grid-template-columns: 1fr; }
+  .filters #searchInput,
+  .filters #statusFilter,
+  .summary-button { grid-column: 1; grid-row: auto; }
+  .receipt-table-head { display: none; }
+  .receipt-card { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; }
+  .receipt-card header > div { grid-column: 1; }
+  .receipt-card .status { grid-column: 2; grid-row: 1; }
+  .receipt-card .receipt-meta small:nth-child(1) { grid-column: 1 / -1; grid-row: 2; }
+  .receipt-card .receipt-meta small:nth-child(2) { grid-column: 1 / -1; grid-row: 3; }
+  .receipt-card .receipt-meta small:nth-child(3) { grid-column: 1 / -1; grid-row: 4; }
   .form-grid, .money-grid { grid-template-columns: 1fr; }
   .wide { grid-column: auto; }
   .backup-reminder, .preview-head, .preview-actions { align-items: stretch; flex-direction: column; }

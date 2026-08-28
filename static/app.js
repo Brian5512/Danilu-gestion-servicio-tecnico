@@ -30,6 +30,11 @@ const exportJsonButton = document.querySelector("#exportJsonButton");
 const importButton = document.querySelector("#importButton");
 const importFile = document.querySelector("#importFile");
 const toast = document.querySelector("#toast");
+const appShell = document.querySelector("#dashboard");
+const sidebarLinks = Array.from(document.querySelectorAll(".sidebar-nav a"));
+const backToDashboardButton = document.querySelector("#backToDashboardButton");
+const topbarHeading = document.querySelector(".topbar-title h2");
+const topbarDescription = document.querySelector(".topbar-title > p:last-child");
 
 const DB_NAME = "danilu";
 const STORE_NAME = "receipts";
@@ -243,6 +248,35 @@ function resetForm() {
   renderList();
 }
 
+function setActiveNavigation(activeLink) {
+  sidebarLinks.forEach((link) => link.classList.toggle("active", link === activeLink));
+}
+
+function clearViewHash() {
+  if (!window.location.hash) return;
+  window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+}
+
+function showDashboardView(activeLink = sidebarLinks[0]) {
+  appShell.classList.remove("form-view");
+  topbarHeading.textContent = "Panel del taller";
+  topbarDescription.textContent = "Control de órdenes, entregas y pagos";
+  setActiveNavigation(activeLink);
+  clearViewHash();
+  window.scrollTo(0, 0);
+}
+
+function showFormView() {
+  appShell.classList.add("form-view");
+  topbarHeading.textContent = currentReceipt ? "Detalle de la orden" : "Nueva orden de servicio";
+  topbarDescription.textContent = currentReceipt
+    ? `${currentReceipt.folio} · ${currentReceipt.client_name || "Sin cliente"}`
+    : "Registra el ingreso, diagnóstico y pago del equipo";
+  setActiveNavigation(sidebarLinks.find((link) => link.dataset.view === "form"));
+  clearViewHash();
+  window.scrollTo(0, 0);
+}
+
 function getNumber(name) {
   const value = Number(form.elements[name].value || 0);
   return Number.isFinite(value) ? value : 0;
@@ -323,7 +357,7 @@ function renderList() {
   if (!visible.length) {
     receiptList.innerHTML = `
       <div class="empty-state">
-        No hay boletas para mostrar. Crea la primera con el formulario de la derecha.
+        No hay boletas para mostrar. Crea la primera con el botón Nueva boleta.
       </div>
     `;
     return;
@@ -450,6 +484,7 @@ async function selectReceipt(id) {
   }
   fillForm(receipt);
   renderList();
+  showFormView();
 }
 
 async function deleteCurrent() {
@@ -1075,7 +1110,22 @@ monthlySummaryContent.addEventListener("click", (event) => {
   selectReceipt(item.dataset.id);
 });
 clearButton.addEventListener("click", resetForm);
-newReceiptButton.addEventListener("click", resetForm);
+newReceiptButton.addEventListener("click", () => {
+  resetForm();
+  showFormView();
+});
+backToDashboardButton.addEventListener("click", () => showDashboardView());
+sidebarLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (link.dataset.view === "form") {
+      resetForm();
+      showFormView();
+      return;
+    }
+    showDashboardView(link);
+  });
+});
 deleteButton.addEventListener("click", deleteCurrent);
 printButtons.forEach((button) => button.addEventListener("click", printCurrent));
 previewButton.addEventListener("click", () => showPreview());
@@ -1106,6 +1156,7 @@ async function boot() {
     db = await openDb();
     resetForm();
     await refresh();
+    showDashboardView();
   } catch (error) {
     showToast("No se pudo abrir la base local del navegador");
     console.error(error);
