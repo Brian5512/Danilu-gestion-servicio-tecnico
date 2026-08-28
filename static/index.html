@@ -4,103 +4,126 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Danilu | Boletas de servicio técnico</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles-v2.css" />
   </head>
   <body>
-    <header class="topbar">
-      <div class="brand-mark">
-        <img src="assets/danilu-logo.png" alt="Logo Danilu" />
-        <div>
-          <p class="eyebrow">Servicio técnico</p>
-          <h1>Danilu</h1>
-          <p class="brand-contact">Mario Gongora 102 · LYMSERVICIO@GMAIL.COM · WhatsApp +56 9 9659 6155</p>
-        </div>
-      </div>
-      <div class="top-actions">
-        <button id="newReceiptButton" class="primary" type="button">Nueva boleta</button>
-        <button id="exportCsvButton" class="ghost" type="button">Exportar CSV</button>
-        <button id="exportJsonButton" class="ghost" type="button">Respaldo JSON</button>
-        <button id="importButton" class="ghost" type="button">Importar</button>
-        <input id="importFile" type="file" accept="application/json,.json" hidden />
-      </div>
-    </header>
-
-    <main class="app-shell">
-      <section id="backupReminder" class="backup-reminder" hidden>
-        <div>
-          <strong>Respaldo recomendado</strong>
-          <span>Exporta un respaldo JSON para guardar una copia de tus boletas fuera del navegador.</span>
-        </div>
-        <button id="dismissBackupReminder" class="ghost" type="button">Recordar luego</button>
-      </section>
-
-      <section class="summary-strip" aria-label="Resumen">
-        <article>
-          <span>Boletas</span>
-          <strong id="statAll">0</strong>
-        </article>
-        <article>
-          <span>En proceso</span>
-          <strong id="statActive">0</strong>
-        </article>
-        <article>
-          <span>Entregadas</span>
-          <strong id="statDone">0</strong>
-        </article>
-        <article>
-          <span>Saldo pendiente</span>
-          <strong id="statPending">$0</strong>
-        </article>
-      </section>
-
-      <section id="pendingPanel" class="pending-panel" aria-label="Pendientes y atrasos">
-        <div class="panel-header compact">
+    <div class="app-frame">
+      <aside class="sidebar" aria-label="Navegación principal">
+        <div class="brand-mark">
+          <img src="assets/danilu-logo.png" alt="Logo Danilu" />
           <div>
-            <p class="eyebrow">Pendientes</p>
-            <h2>Equipos por revisar</h2>
+            <h1>Danilu</h1>
+            <p>Servicio técnico</p>
           </div>
-          <strong id="statOverdue">0 atrasados</strong>
         </div>
-        <div id="pendingList" class="pending-list"></div>
-      </section>
 
-      <section class="workspace">
-        <aside class="list-panel" aria-label="Historial de boletas">
-          <div class="panel-header">
+        <nav class="sidebar-nav">
+          <a class="active" href="#dashboard"><span aria-hidden="true">01</span>Panel</a>
+          <a href="#ordersPanel"><span aria-hidden="true">02</span>Historial</a>
+          <a href="#receiptForm"><span aria-hidden="true">03</span>Registrar servicio</a>
+          <a href="#pendingPanel"><span aria-hidden="true">04</span>Pendientes</a>
+        </nav>
+
+        <div class="sidebar-contact">
+          <strong>Datos del taller</strong>
+          <span>Mario Gongora 102</span>
+          <span>+56 9 9659 6155</span>
+          <span>LYMSERVICIO@GMAIL.COM</span>
+        </div>
+      </aside>
+
+      <div class="app-stage">
+        <header class="topbar">
+          <div class="topbar-title">
+            <p class="eyebrow">Gestión local</p>
+            <h2>Panel del taller</h2>
+            <p>Control de órdenes, entregas y pagos</p>
+          </div>
+          <div class="top-actions">
+            <button id="newReceiptButton" class="primary" type="button">Nueva boleta</button>
+            <button id="exportCsvButton" class="ghost" type="button">Exportar CSV</button>
+            <button id="exportJsonButton" class="ghost" type="button">Respaldo JSON</button>
+            <button id="importButton" class="ghost" type="button">Importar</button>
+            <input id="importFile" type="file" accept="application/json,.json" hidden />
+          </div>
+        </header>
+
+        <main id="dashboard" class="app-shell">
+          <section id="backupReminder" class="backup-reminder" hidden>
             <div>
-              <p class="eyebrow">Historial</p>
-              <h2>Arreglos registrados</h2>
+              <strong>Respaldo recomendado</strong>
+              <span>Exporta un respaldo JSON para guardar una copia de tus boletas fuera del navegador.</span>
             </div>
-          </div>
+            <button id="dismissBackupReminder" class="ghost" type="button">Recordar luego</button>
+          </section>
 
-          <div class="filters">
-            <button id="monthlySummaryButton" class="summary-button" type="button">Resumen mensual</button>
-            <input id="searchInput" type="search" placeholder="Buscar cliente, equipo, folio..." />
-            <select id="statusFilter" aria-label="Filtrar por estado">
-              <option value="">Todos los estados</option>
-              <option>Recibido</option>
-              <option>Diagnosticando</option>
-              <option>Esperando repuesto</option>
-              <option>Listo para retiro</option>
-              <option>Entregado</option>
-              <option>Anulado</option>
-            </select>
-          </div>
+          <section class="summary-strip" aria-label="Resumen">
+            <article>
+              <span>Boletas</span>
+              <strong id="statAll">0</strong>
+            </article>
+            <article>
+              <span>En proceso</span>
+              <strong id="statActive">0</strong>
+            </article>
+            <article>
+              <span>Entregadas</span>
+              <strong id="statDone">0</strong>
+            </article>
+            <article>
+              <span>Saldo pendiente</span>
+              <strong id="statPending">$0</strong>
+            </article>
+          </section>
 
-          <div id="receiptList" class="receipt-list"></div>
-        </aside>
-
-        <section class="form-panel" aria-label="Formulario de boleta">
-          <div class="panel-header">
-            <div>
-              <p class="eyebrow" id="formMode">Nueva boleta</p>
-              <h2 id="formTitle">Registrar servicio</h2>
-              <strong id="formFolioBadge" class="folio-badge">Sin folio</strong>
+          <section id="pendingPanel" class="pending-panel" aria-label="Pendientes y atrasos">
+            <div class="panel-header compact">
+              <div>
+                <p class="eyebrow">Prioridad de hoy</p>
+                <h2>Equipos por revisar</h2>
+              </div>
+              <strong id="statOverdue">0 atrasados</strong>
             </div>
-          </div>
+            <div id="pendingList" class="pending-list"></div>
+          </section>
 
-          <form id="receiptForm">
-            <input type="hidden" name="id" id="receiptId" />
+          <section class="workspace">
+            <aside id="ordersPanel" class="list-panel" aria-label="Historial de boletas">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow">Órdenes de servicio</p>
+                  <h2>Historial reciente</h2>
+                </div>
+              </div>
+
+              <div class="filters">
+                <button id="monthlySummaryButton" class="summary-button" type="button">Resumen mensual</button>
+                <input id="searchInput" type="search" placeholder="Buscar cliente, equipo, folio..." />
+                <select id="statusFilter" aria-label="Filtrar por estado">
+                  <option value="">Todos los estados</option>
+                  <option>Recibido</option>
+                  <option>Diagnosticando</option>
+                  <option>Esperando repuesto</option>
+                  <option>Listo para retiro</option>
+                  <option>Entregado</option>
+                  <option>Anulado</option>
+                </select>
+              </div>
+
+              <div id="receiptList" class="receipt-list"></div>
+            </aside>
+
+            <section class="form-panel" aria-label="Formulario de boleta">
+              <div class="panel-header">
+                <div>
+                  <p class="eyebrow" id="formMode">Nueva boleta</p>
+                  <h2 id="formTitle">Registrar servicio</h2>
+                  <strong id="formFolioBadge" class="folio-badge">Sin folio</strong>
+                </div>
+              </div>
+
+              <form id="receiptForm">
+                <input type="hidden" name="id" id="receiptId" />
 
             <div class="form-grid">
               <label>
@@ -260,10 +283,12 @@
               <button id="clearButton" class="ghost" type="button">Limpiar</button>
               <button id="deleteButton" class="danger" type="button" disabled>Eliminar</button>
             </div>
-          </form>
-        </section>
-      </section>
-    </main>
+              </form>
+            </section>
+          </section>
+        </main>
+      </div>
+    </div>
 
     <section id="printArea" class="print-area" aria-hidden="true"></section>
     <dialog id="previewModal" class="preview-modal">
@@ -301,6 +326,6 @@
       </div>
     </dialog>
     <div id="toast" class="toast" role="status"></div>
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
   </body>
 </html>
