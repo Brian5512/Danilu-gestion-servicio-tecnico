@@ -31,7 +31,7 @@ const importButton = document.querySelector("#importButton");
 const importFile = document.querySelector("#importFile");
 const toast = document.querySelector("#toast");
 const appShell = document.querySelector("#dashboard");
-const sidebarLinks = Array.from(document.querySelectorAll(".sidebar-nav a"));
+const sidebarLinks = Array.from(document.querySelectorAll(".sidebar-nav [data-nav]"));
 const backToDashboardButton = document.querySelector("#backToDashboardButton");
 const topbarHeading = document.querySelector(".topbar-title h2");
 const topbarDescription = document.querySelector(".topbar-title > p:last-child");
@@ -224,8 +224,8 @@ function fillForm(receipt) {
   }
   receiptId.value = receipt.id || "";
   currentReceipt = receipt.id ? receipt : null;
-  formMode.textContent = receipt.id ? receipt.folio : "Nueva boleta";
-  formTitle.textContent = receipt.id ? `Editando ${receipt.client_name}` : "Registrar servicio";
+  formMode.textContent = receipt.id ? receipt.folio : "Nuevo ingreso";
+  formTitle.textContent = receipt.id ? `Editando ${receipt.client_name}` : "Registrar equipo";
   formFolioBadge.textContent = receipt.id ? `BOLETA ${receipt.folio}` : "Sin folio";
   printButtons.forEach((button) => {
     button.disabled = !receipt.id;
@@ -268,7 +268,7 @@ function showDashboardView(activeLink = sidebarLinks[0]) {
 
 function showFormView() {
   appShell.classList.add("form-view");
-  topbarHeading.textContent = currentReceipt ? "Detalle de la orden" : "Nueva orden de servicio";
+  topbarHeading.textContent = currentReceipt ? "Detalle de la orden" : "Registrar equipo";
   topbarDescription.textContent = currentReceipt
     ? `${currentReceipt.folio} · ${currentReceipt.client_name || "Sin cliente"}`
     : "Registra el ingreso, diagnóstico y pago del equipo";
@@ -357,7 +357,7 @@ function renderList() {
   if (!visible.length) {
     receiptList.innerHTML = `
       <div class="empty-state">
-        No hay boletas para mostrar. Crea la primera con el botón Nueva boleta.
+        No hay boletas para mostrar. Crea la primera con el botón Registrar equipo.
       </div>
     `;
     return;
@@ -1101,7 +1101,10 @@ pendingList.addEventListener("click", (event) => {
 searchInput.addEventListener("input", scheduleSearch);
 statusFilter.addEventListener("change", renderList);
 monthlySummaryButton.addEventListener("click", showMonthlySummary);
-closeMonthlyButton.addEventListener("click", closeMonthlySummary);
+closeMonthlyButton.addEventListener("click", () => {
+  closeMonthlySummary();
+  setActiveNavigation(sidebarLinks[0]);
+});
 summaryMonthInput.addEventListener("change", renderMonthlySummary);
 monthlySummaryContent.addEventListener("click", (event) => {
   const item = event.target.closest(".monthly-receipt");
@@ -1118,12 +1121,27 @@ backToDashboardButton.addEventListener("click", () => showDashboardView());
 sidebarLinks.forEach((link) => {
   link.addEventListener("click", (event) => {
     event.preventDefault();
+    if (link.dataset.action === "monthly") {
+      showDashboardView(link);
+      showMonthlySummary();
+      return;
+    }
+    if (link.dataset.action === "backup") {
+      setActiveNavigation(link);
+      exportJson();
+      window.setTimeout(() => setActiveNavigation(sidebarLinks[0]), 1200);
+      return;
+    }
     if (link.dataset.view === "form") {
       resetForm();
       showFormView();
       return;
     }
     showDashboardView(link);
+    const section = document.querySelector(`#${link.dataset.section || "dashboard"}`);
+    if (section && link.dataset.section !== "dashboard") {
+      window.setTimeout(() => section.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    }
   });
 });
 deleteButton.addEventListener("click", deleteCurrent);
