@@ -219,11 +219,22 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   margin: 20px auto 42px;
 }
 
-.app-shell.form-view {
+.app-shell.form-view,
+.app-shell.orders-view,
+.app-shell.pending-view,
+.app-shell.settings-view {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.app-shell.form-view {
   grid-template-areas: "form";
 }
-.backup-reminder, .pending-panel, .list-panel, .form-panel, .summary-strip article {
+
+.app-shell.orders-view { grid-template-areas: "list"; }
+.app-shell.pending-view { grid-template-areas: "pending"; }
+.app-shell.settings-view { grid-template-areas: "settings"; }
+
+.backup-reminder, .pending-panel, .list-panel, .form-panel, .settings-panel, .summary-strip article {
   border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--panel);
@@ -337,14 +348,24 @@ button:disabled { opacity: 0.42; cursor: not-allowed; }
   display: contents;
 }
 
-.list-panel, .form-panel { box-shadow: var(--shadow); }
+.app-shell:not(.pending-view) .pending-item:nth-child(n + 7) { display: none; }
+.app-shell.pending-view .pending-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.list-panel, .form-panel, .settings-panel { box-shadow: var(--shadow); }
 .list-panel { grid-area: list; min-width: 0; min-height: 640px; overflow: hidden; }
 .form-panel { display: none; grid-area: form; min-width: 0; overflow: hidden; }
-.app-shell.form-view .backup-reminder,
-.app-shell.form-view .summary-strip,
-.app-shell.form-view .pending-panel,
-.app-shell.form-view .list-panel { display: none !important; }
-.app-shell.form-view .form-panel { display: block; }
+.settings-panel { display: none; grid-area: settings; min-width: 0; overflow: hidden; }
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .backup-reminder,
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .summary-strip,
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .list-panel,
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .pending-panel,
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .form-panel,
+.app-shell:is(.form-view, .orders-view, .pending-view, .settings-view) .settings-panel { display: none !important; }
+.app-shell.form-view .form-panel { display: block !important; }
+.app-shell.orders-view .list-panel { display: block !important; min-height: calc(100vh - 134px); }
+.app-shell.orders-view .receipt-list { max-height: none; min-height: calc(100vh - 316px); }
+.app-shell.pending-view .pending-panel { display: block !important; min-height: calc(100vh - 134px); }
+.app-shell.settings-view .settings-panel { display: block !important; }
 .form-panel > .panel-header { background: #1d2429; }
 .form-panel-header { min-height: 78px; }
 .folio-badge {
@@ -484,6 +505,92 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   background: rgba(27,33,38,.97);
 }
 
+.settings-header p:last-child {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.settings-form {
+  gap: 0;
+  padding: 0;
+}
+
+.settings-section {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.65fr) minmax(0, 1.8fr);
+  gap: 28px;
+  padding: 24px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.settings-section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.settings-section-title > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid rgba(189, 120, 75, 0.5);
+  border-radius: 5px;
+  background: rgba(189, 120, 75, 0.1);
+  color: #db9569;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.settings-section-title h3,
+.settings-section-title p { margin: 0; }
+.settings-section-title h3 { color: #f2f4f5; font-size: 14px; }
+.settings-section-title p { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 13px;
+  border: 1px solid #354047;
+  border-radius: 4px;
+  background: var(--field);
+  cursor: pointer;
+}
+
+.settings-check input {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  margin: 2px 0 0;
+  padding: 0;
+  accent-color: var(--brand);
+}
+
+.settings-check span,
+.settings-check strong,
+.settings-check small { display: block; }
+.settings-check strong { color: var(--ink); }
+.settings-check small { margin-top: 3px; color: var(--muted); font-weight: 400; line-height: 1.45; }
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 16px 24px;
+  background: #181e22;
+}
+
 .toast {
   position: fixed;
   right: 18px;
@@ -558,6 +665,7 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   .app-frame { grid-template-columns: 205px minmax(0, 1fr); }
   .workspace { grid-template-columns: minmax(300px, 350px) minmax(0, 1fr); }
   .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app-shell.pending-view .pending-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 980px) {
@@ -598,6 +706,9 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   }
 
   .app-shell.form-view { grid-template-areas: "form"; }
+  .app-shell.orders-view { grid-template-areas: "list"; }
+  .app-shell.pending-view { grid-template-areas: "pending"; }
+  .app-shell.settings-view { grid-template-areas: "settings"; }
 }
 
 @media (max-width: 720px) {
@@ -608,6 +719,11 @@ hr { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line-soft); 
   .app-shell { width: min(100% - 20px, 1540px); margin-top: 10px; }
   .summary-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .pending-list, .monthly-grid { grid-template-columns: 1fr; }
+  .app-shell.pending-view .pending-list { grid-template-columns: 1fr; }
+  .settings-section { grid-template-columns: 1fr; gap: 14px; padding: 18px; }
+  .settings-grid { grid-template-columns: 1fr; }
+  .settings-grid .wide { grid-column: auto; }
+  .settings-actions { flex-direction: column; align-items: stretch; padding: 14px 18px; }
   .filters { grid-template-columns: 1fr; }
   .filters #searchInput,
   .filters #statusFilter,

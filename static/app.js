@@ -26,7 +26,6 @@ const deleteButton = document.querySelector("#deleteButton");
 const clearButton = document.querySelector("#clearButton");
 const newReceiptButton = document.querySelector("#newReceiptButton");
 const exportCsvButton = document.querySelector("#exportCsvButton");
-const exportJsonButton = document.querySelector("#exportJsonButton");
 const importButton = document.querySelector("#importButton");
 const importFile = document.querySelector("#importFile");
 const toast = document.querySelector("#toast");
@@ -35,17 +34,39 @@ const sidebarLinks = Array.from(document.querySelectorAll(".sidebar-nav [data-na
 const backToDashboardButton = document.querySelector("#backToDashboardButton");
 const topbarHeading = document.querySelector(".topbar-title h2");
 const topbarDescription = document.querySelector(".topbar-title > p:last-child");
+const settingsForm = document.querySelector("#settingsForm");
+const resetSettingsButton = document.querySelector("#resetSettingsButton");
+const appNameLabel = document.querySelector("#appNameLabel");
+const appSubtitleLabel = document.querySelector("#appSubtitleLabel");
+const sidebarAddress = document.querySelector("#sidebarAddress");
+const sidebarPhone = document.querySelector("#sidebarPhone");
+const sidebarEmail = document.querySelector("#sidebarEmail");
 
 const DB_NAME = "danilu";
 const STORE_NAME = "receipts";
 const DB_VERSION = 1;
 const BACKUP_KEY = "danilu_last_backup_at";
 const BACKUP_DISMISS_KEY = "danilu_backup_dismissed_at";
+const SETTINGS_KEY = "danilu_settings_v1";
 const IVA_RATE = 0.19;
+
+const DEFAULT_SETTINGS = Object.freeze({
+  appName: "Danilu",
+  serviceName: "Servicio técnico",
+  businessAddress: "Mario Gongora 102",
+  businessEmail: "LYMSERVICIO@GMAIL.COM",
+  businessPhone: "+56 9 9659 6155",
+  defaultTechnician: "",
+  defaultWarranty: "30",
+  backupReminder: true,
+  warrantyTerms:
+    "La garantía cubre únicamente el trabajo realizado por Danilu. No cubre daños por humedad, golpes, intervención de terceros, mal uso, nuevas fallas no relacionadas o manipulación posterior del equipo.",
+});
 
 let db = null;
 let receipts = [];
 let currentReceipt = null;
+let settings = loadSettings();
 
 const money = new Intl.NumberFormat("es-CL", {
   style: "currency",
@@ -93,6 +114,90 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 2400);
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return { ...DEFAULT_SETTINGS, ...saved };
+  } catch (error) {
+    console.warn("No se pudo leer la configuración guardada", error);
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function cleanImportedSettings(raw) {
+  const warranty = Math.max(0, Math.round(Number(raw.defaultWarranty ?? DEFAULT_SETTINGS.defaultWarranty)));
+  return {
+    appName: String(raw.appName || DEFAULT_SETTINGS.appName).trim(),
+    serviceName: String(raw.serviceName || "").trim(),
+    businessAddress: String(raw.businessAddress || "").trim(),
+    businessEmail: String(raw.businessEmail || "").trim(),
+    businessPhone: String(raw.businessPhone || "").trim(),
+    defaultTechnician: String(raw.defaultTechnician || "").trim(),
+    defaultWarranty: String(warranty),
+    backupReminder:
+      typeof raw.backupReminder === "boolean" ? raw.backupReminder : DEFAULT_SETTINGS.backupReminder,
+    warrantyTerms: String(raw.warrantyTerms || "").trim(),
+  };
+}
+
+function setOptionalText(element, value) {
+  const clean = String(value || "").trim();
+  element.textContent = clean;
+  element.hidden = !clean;
+}
+
+function populateSettingsForm() {
+  settingsForm.elements.app_name.value = settings.appName;
+  settingsForm.elements.service_name.value = settings.serviceName;
+  settingsForm.elements.business_address.value = settings.businessAddress;
+  settingsForm.elements.business_email.value = settings.businessEmail;
+  settingsForm.elements.business_phone.value = settings.businessPhone;
+  settingsForm.elements.default_technician.value = settings.defaultTechnician;
+  settingsForm.elements.default_warranty.value = settings.defaultWarranty;
+  settingsForm.elements.warranty_terms.value = settings.warrantyTerms;
+  settingsForm.elements.backup_reminder.checked = Boolean(settings.backupReminder);
+}
+
+function applySettings() {
+  appNameLabel.textContent = settings.appName;
+  setOptionalText(appSubtitleLabel, settings.serviceName);
+  setOptionalText(sidebarAddress, settings.businessAddress);
+  setOptionalText(sidebarPhone, settings.businessPhone);
+  setOptionalText(sidebarEmail, settings.businessEmail);
+  document.title = `${settings.appName} | Gestión de servicio técnico`;
+  populateSettingsForm();
+}
+
+function saveSettings(event) {
+  event.preventDefault();
+  const warranty = Math.max(0, Math.round(Number(settingsForm.elements.default_warranty.value || 0)));
+  settings = {
+    appName: settingsForm.elements.app_name.value.trim() || DEFAULT_SETTINGS.appName,
+    serviceName: settingsForm.elements.service_name.value.trim(),
+    businessAddress: settingsForm.elements.business_address.value.trim(),
+    businessEmail: settingsForm.elements.business_email.value.trim(),
+    businessPhone: settingsForm.elements.business_phone.value.trim(),
+    defaultTechnician: settingsForm.elements.default_technician.value.trim(),
+    defaultWarranty: String(warranty),
+    backupReminder: settingsForm.elements.backup_reminder.checked,
+    warrantyTerms: settingsForm.elements.warranty_terms.value.trim(),
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  applySettings();
+  renderBackupReminder();
+  showToast("Configuración guardada");
+}
+
+function resetSettings() {
+  const ok = window.confirm("¿Restaurar la configuración original de la aplicación?");
+  if (!ok) return;
+  settings = { ...DEFAULT_SETTINGS };
+  localStorage.removeItem(SETTINGS_KEY);
+  applySettings();
+  renderBackupReminder();
+  showToast("Configuración restaurada");
 }
 
 function openDb() {
@@ -238,7 +343,8 @@ function resetForm() {
   fillForm({
     received_date: today(),
     status: "Recibido",
-    warranty: "30",
+    warranty: settings.defaultWarranty,
+    technician: settings.defaultTechnician,
     payment_method: "",
     labor_cost: 0,
     other_cost: 0,
@@ -257,24 +363,34 @@ function clearViewHash() {
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
 }
 
-function showDashboardView(activeLink = sidebarLinks[0]) {
-  appShell.classList.remove("form-view");
-  topbarHeading.textContent = "Panel del taller";
-  topbarDescription.textContent = "Control de órdenes, entregas y pagos";
+function showAppView(view, activeLink) {
+  appShell.classList.remove("form-view", "orders-view", "pending-view", "settings-view");
+  if (view !== "panel") appShell.classList.add(`${view}-view`);
+  const headings = {
+    panel: ["Panel del taller", "Control de órdenes, entregas y pagos"],
+    orders: ["Órdenes de servicio", "Busca, filtra y abre cualquier equipo registrado"],
+    pending: ["Pendientes y atrasos", "Equipos que requieren revisión, reparación o entrega"],
+    settings: ["Configuración", "Personaliza la aplicación y los valores predeterminados"],
+  };
+  const [heading, description] = headings[view] || headings.panel;
+  topbarHeading.textContent = heading;
+  topbarDescription.textContent = description;
   setActiveNavigation(activeLink);
   clearViewHash();
   window.scrollTo(0, 0);
 }
 
+function showDashboardView(activeLink = sidebarLinks.find((link) => link.dataset.view === "panel")) {
+  showAppView("panel", activeLink);
+}
+
 function showFormView() {
-  appShell.classList.add("form-view");
+  const activeLink = sidebarLinks.find((link) => link.dataset.view === "form");
+  showAppView("form", activeLink);
   topbarHeading.textContent = currentReceipt ? "Detalle de la orden" : "Registrar equipo";
   topbarDescription.textContent = currentReceipt
     ? `${currentReceipt.folio} · ${currentReceipt.client_name || "Sin cliente"}`
     : "Registra el ingreso, diagnóstico y pago del equipo";
-  setActiveNavigation(sidebarLinks.find((link) => link.dataset.view === "form"));
-  clearViewHash();
-  window.scrollTo(0, 0);
 }
 
 function getNumber(name) {
@@ -423,8 +539,7 @@ function renderPendingPanel() {
       const dateA = a.promised_date || "9999-12-31";
       const dateB = b.promised_date || "9999-12-31";
       return dateA.localeCompare(dateB);
-    })
-    .slice(0, 6);
+    });
 
   if (!pending.length) {
     pendingList.innerHTML = `<p class="empty-inline">No hay equipos pendientes.</p>`;
@@ -448,7 +563,7 @@ function renderPendingPanel() {
 }
 
 function renderBackupReminder() {
-  if (!receipts.length) {
+  if (!settings.backupReminder || !receipts.length) {
     backupReminder.hidden = true;
     return;
   }
@@ -632,13 +747,13 @@ function buildReceiptDocument(receipt) {
     <div class="print-sheet">
       <div class="print-head">
         <div class="print-brand">
-          <img src="assets/danilu-logo.png" alt="Logo Danilu">
+          <img src="assets/danilu-logo.png" alt="Logo ${escapeHtml(settings.appName)}">
           <div>
-            <h1>Danilu</h1>
-            <p>Servicio técnico</p>
-            <p>Dirección: Mario Gongora 102</p>
-            <p>Correo: LYMSERVICIO@GMAIL.COM</p>
-            <p>Fono / WhatsApp: +56 9 9659 6155</p>
+            <h1>${escapeHtml(settings.appName)}</h1>
+            ${settings.serviceName ? `<p>${escapeHtml(settings.serviceName)}</p>` : ""}
+            ${settings.businessAddress ? `<p>Dirección: ${escapeHtml(settings.businessAddress)}</p>` : ""}
+            ${settings.businessEmail ? `<p>Correo: ${escapeHtml(settings.businessEmail)}</p>` : ""}
+            ${settings.businessPhone ? `<p>Fono / WhatsApp: ${escapeHtml(settings.businessPhone)}</p>` : ""}
           </div>
         </div>
         <div class="print-folio">
@@ -669,7 +784,7 @@ function buildReceiptDocument(receipt) {
           <div><strong>Marca / modelo:</strong> ${escapeHtml([receipt.brand, receipt.model].filter(Boolean).join(" · "))}</div>
           <div><strong>Serie / IMEI:</strong> ${escapeHtml(receipt.serial_number || "")}</div>
           <div><strong>Clave / PIN:</strong> ${escapeHtml(receipt.device_password || "No informado")}</div>
-          <div><strong>Garantía:</strong> ${escapeHtml(formatWarranty(receipt.warranty || "30"))}</div>
+          <div><strong>Garantía:</strong> ${escapeHtml(formatWarranty(receipt.warranty || settings.defaultWarranty))}</div>
           <div><strong>Fecha entrega:</strong> ${escapeHtml(receipt.delivered_date || "Pendiente")}</div>
           <div class="span-2"><strong>Accesorios:</strong> ${escapeHtml(receipt.accessories || "")}</div>
         </div>
@@ -680,10 +795,7 @@ function buildReceiptDocument(receipt) {
       ${printBlock("Trabajo realizado", receipt.work_done)}
       ${printBlock("Repuestos", receipt.parts_used)}
       ${printBlock("Observaciones", receipt.notes)}
-      ${printBlock(
-        "Condiciones de garantía",
-        "La garantía cubre únicamente el trabajo realizado por Danilu. No cubre daños por humedad, golpes, intervención de terceros, mal uso, nuevas fallas no relacionadas o manipulación posterior del equipo."
-      )}
+      ${printBlock("Condiciones de garantía", settings.warrantyTerms)}
 
       <div class="print-bottom">
         <div class="signature-row">
@@ -759,7 +871,7 @@ function printReceipt(receipt) {
       <head>
         <meta charset="utf-8">
         <base href="${window.location.href.slice(0, window.location.href.lastIndexOf("/") + 1)}">
-        <title>${escapeHtml(receipt.folio || "Boleta Danilu")}</title>
+        <title>${escapeHtml(receipt.folio || `Boleta ${settings.appName}`)}</title>
         <style>
           ${receiptPrintStyles()}
         </style>
@@ -985,6 +1097,17 @@ function csvValue(value) {
   return `"${String(value ?? "").replaceAll('"', '""')}"`;
 }
 
+function appFileSlug() {
+  return (
+    settings.appName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "servicio-tecnico"
+  );
+}
+
 function exportCsv() {
   const headers = [
     "folio",
@@ -1033,18 +1156,19 @@ function exportCsv() {
     };
     lines.push(headers.map((header) => csvValue(exportRow[header])).join(","));
   }
-  downloadFile(`boletas-danilu-${today()}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
+  downloadFile(`boletas-${appFileSlug()}-${today()}.csv`, lines.join("\n"), "text/csv;charset=utf-8");
   showToast("CSV exportado");
 }
 
 function exportJson() {
   const payload = {
-    app: "Danilu",
+    app: settings.appName,
+    settings,
     exported_at: nowIso(),
     receipts,
   };
   downloadFile(
-    `respaldo-danilu-${today()}.json`,
+    `respaldo-${appFileSlug()}-${today()}.json`,
     JSON.stringify(payload, null, 2),
     "application/json;charset=utf-8"
   );
@@ -1057,11 +1181,17 @@ async function importJson(file) {
   const text = await file.text();
   const payload = JSON.parse(text);
   const imported = Array.isArray(payload) ? payload : payload.receipts;
+  const importedSettings = !Array.isArray(payload) && payload.settings && typeof payload.settings === "object"
+    ? payload.settings
+    : null;
   if (!Array.isArray(imported)) {
     throw new Error("El archivo no tiene boletas válidas");
   }
 
-  const ok = window.confirm(`Se importarán ${imported.length} boletas. Las boletas con el mismo folio se actualizarán.`);
+  const settingsNotice = importedSettings ? " También se restaurará la configuración del local." : "";
+  const ok = window.confirm(
+    `Se importarán ${imported.length} boletas. Las boletas con el mismo folio se actualizarán.${settingsNotice}`
+  );
   if (!ok) return;
 
   const existingByFolio = new Map(receipts.map((receipt) => [receipt.folio, receipt]));
@@ -1078,8 +1208,14 @@ async function importJson(file) {
     await saveReceiptRecord(payloadToSave);
   }
 
+  if (importedSettings) {
+    settings = cleanImportedSettings(importedSettings);
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    applySettings();
+  }
+
   await refresh();
-  showToast("Respaldo importado");
+  showToast(importedSettings ? "Respaldo y configuración importados" : "Respaldo importado");
 }
 
 let searchTimer = null;
@@ -1127,9 +1263,10 @@ sidebarLinks.forEach((link) => {
       return;
     }
     if (link.dataset.action === "backup") {
+      const previousActive = sidebarLinks.find((item) => item.classList.contains("active"));
       setActiveNavigation(link);
       exportJson();
-      window.setTimeout(() => setActiveNavigation(sidebarLinks[0]), 1200);
+      window.setTimeout(() => setActiveNavigation(previousActive || sidebarLinks[0]), 1200);
       return;
     }
     if (link.dataset.view === "form") {
@@ -1137,13 +1274,12 @@ sidebarLinks.forEach((link) => {
       showFormView();
       return;
     }
-    showDashboardView(link);
-    const section = document.querySelector(`#${link.dataset.section || "dashboard"}`);
-    if (section && link.dataset.section !== "dashboard") {
-      window.setTimeout(() => section.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-    }
+    showAppView(link.dataset.view || "panel", link);
+    if (link.dataset.view === "settings") populateSettingsForm();
   });
 });
+settingsForm.addEventListener("submit", saveSettings);
+resetSettingsButton.addEventListener("click", resetSettings);
 deleteButton.addEventListener("click", deleteCurrent);
 printButtons.forEach((button) => button.addEventListener("click", printCurrent));
 previewButton.addEventListener("click", () => showPreview());
@@ -1155,7 +1291,6 @@ dismissBackupReminder.addEventListener("click", () => {
   renderBackupReminder();
 });
 exportCsvButton.addEventListener("click", exportCsv);
-exportJsonButton.addEventListener("click", exportJson);
 importButton.addEventListener("click", () => importFile.click());
 importFile.addEventListener("change", async () => {
   const [file] = importFile.files;
@@ -1171,6 +1306,7 @@ importFile.addEventListener("change", async () => {
 
 async function boot() {
   try {
+    applySettings();
     db = await openDb();
     resetForm();
     await refresh();

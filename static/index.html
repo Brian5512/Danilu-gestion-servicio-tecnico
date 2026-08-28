@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Danilu | Boletas de servicio técnico</title>
-    <link rel="stylesheet" href="styles-v2.css?v=5" />
+    <link rel="stylesheet" href="styles-v2.css?v=6" />
   </head>
   <body>
     <div class="app-frame">
@@ -12,19 +12,19 @@
         <div class="brand-mark">
           <img src="assets/danilu-logo.png" alt="Logo Danilu" />
           <div>
-            <h1>Danilu</h1>
-            <p>Servicio técnico</p>
+            <h1 id="appNameLabel">Danilu</h1>
+            <p id="appSubtitleLabel">Servicio técnico</p>
           </div>
         </div>
 
         <nav class="sidebar-nav">
-          <a class="active" href="#dashboard" data-nav data-view="dashboard" data-section="dashboard">
+          <a class="active" href="#dashboard" data-nav data-view="panel">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             </span>
             <span>Panel</span>
           </a>
-          <a href="#ordersPanel" data-nav data-view="dashboard" data-section="ordersPanel">
+          <a href="#ordersPanel" data-nav data-view="orders">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M9 5h6"/><path d="M9 3h6a1 1 0 0 1 1 1v3H8V4a1 1 0 0 1 1-1Z"/><rect x="5" y="6" width="14" height="15" rx="2"/><path d="M8 11h8M8 15h8"/></svg>
             </span>
@@ -36,7 +36,7 @@
             </span>
             <span>Registrar equipo</span>
           </a>
-          <a href="#pendingPanel" data-nav data-view="dashboard" data-section="pendingPanel">
+          <a href="#pendingPanel" data-nav data-view="pending">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
             </span>
@@ -54,13 +54,19 @@
             </span>
             <span>Crear respaldo</span>
           </a>
+          <a href="#settingsPanel" data-nav data-view="settings">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3v-.2h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+            </span>
+            <span>Configuración</span>
+          </a>
         </nav>
 
         <div class="sidebar-contact">
           <strong>Datos del taller</strong>
-          <span>Mario Gongora 102</span>
-          <span>+56 9 9659 6155</span>
-          <span>LYMSERVICIO@GMAIL.COM</span>
+          <span id="sidebarAddress">Mario Gongora 102</span>
+          <span id="sidebarPhone">+56 9 9659 6155</span>
+          <span id="sidebarEmail">LYMSERVICIO@GMAIL.COM</span>
         </div>
       </aside>
 
@@ -74,7 +80,6 @@
           <div class="top-actions">
             <button id="newReceiptButton" class="primary" type="button">Registrar equipo</button>
             <button id="exportCsvButton" class="ghost" type="button">Exportar CSV</button>
-            <button id="exportJsonButton" class="ghost" type="button">Respaldo JSON</button>
             <button id="importButton" class="ghost" type="button">Importar</button>
             <input id="importFile" type="file" accept="application/json,.json" hidden />
           </div>
@@ -325,6 +330,98 @@
             </div>
               </form>
             </section>
+
+            <section id="settingsPanel" class="settings-panel" aria-label="Configuración de la aplicación">
+              <div class="panel-header settings-header">
+                <div>
+                  <p class="eyebrow">Preferencias del local</p>
+                  <h2>Configuración</h2>
+                  <p>Estos datos se guardan en este navegador y se usan en la aplicación y las boletas impresas.</p>
+                </div>
+              </div>
+
+              <form id="settingsForm" class="settings-form">
+                <section class="settings-section">
+                  <div class="settings-section-title">
+                    <span>01</span>
+                    <div>
+                      <h3>Identidad del sistema</h3>
+                      <p>Personaliza el nombre que aparece en el menú y en la boleta.</p>
+                    </div>
+                  </div>
+                  <div class="settings-grid">
+                    <label>
+                      Nombre de la aplicación
+                      <input name="app_name" required maxlength="40" />
+                    </label>
+                    <label>
+                      Descripción del local
+                      <input name="service_name" maxlength="60" />
+                    </label>
+                  </div>
+                </section>
+
+                <section class="settings-section">
+                  <div class="settings-section-title">
+                    <span>02</span>
+                    <div>
+                      <h3>Datos de contacto</h3>
+                      <p>Se mostrarán en el menú lateral y en los comprobantes.</p>
+                    </div>
+                  </div>
+                  <div class="settings-grid">
+                    <label class="wide">
+                      Dirección
+                      <input name="business_address" autocomplete="street-address" />
+                    </label>
+                    <label>
+                      Correo
+                      <input name="business_email" type="email" autocomplete="email" />
+                    </label>
+                    <label>
+                      Teléfono / WhatsApp
+                      <input name="business_phone" autocomplete="tel" />
+                    </label>
+                  </div>
+                </section>
+
+                <section class="settings-section">
+                  <div class="settings-section-title">
+                    <span>03</span>
+                    <div>
+                      <h3>Valores predeterminados</h3>
+                      <p>Se completan automáticamente al registrar un equipo nuevo.</p>
+                    </div>
+                  </div>
+                  <div class="settings-grid">
+                    <label>
+                      Técnico predeterminado
+                      <input name="default_technician" />
+                    </label>
+                    <label>
+                      Garantía predeterminada en días
+                      <input name="default_warranty" type="number" min="0" max="3650" step="1" />
+                    </label>
+                    <label class="wide">
+                      Condiciones de garantía para la boleta
+                      <textarea name="warranty_terms" rows="4"></textarea>
+                    </label>
+                    <label class="settings-check wide">
+                      <input name="backup_reminder" type="checkbox" />
+                      <span>
+                        <strong>Recordar respaldos semanales</strong>
+                        <small>Muestra un aviso si ha pasado más de una semana desde el último respaldo JSON.</small>
+                      </span>
+                    </label>
+                  </div>
+                </section>
+
+                <div class="settings-actions">
+                  <button class="primary" type="submit">Guardar configuración</button>
+                  <button id="resetSettingsButton" class="ghost" type="button">Restaurar valores originales</button>
+                </div>
+              </form>
+            </section>
           </section>
         </main>
       </div>
@@ -366,6 +463,6 @@
       </div>
     </dialog>
     <div id="toast" class="toast" role="status"></div>
-    <script src="app.js?v=5"></script>
+    <script src="app.js?v=6"></script>
   </body>
 </html>
